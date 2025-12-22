@@ -1,0 +1,13 @@
+[project]
+name = "aiml-7th-sem-tumour-budding"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=2.3.5",
+    "opencv-python>=4.11.0.86",
+    "openslide-bin>=4.0.0.10",
+    "openslide-python>=1.4.3",
+    "tqdm>=4.67.1",
+]
