@@ -1,0 +1,304 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{multirow}
+\usepackage{url}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+% Path to images
+\graphicspath{ {./markdown_images/} }
+
+\begin{document}
+
+\title{Automated Detection and Grading of Tumor Budding in Oral Squamous Cell Carcinoma using Deep Learning\\
+}
+
+\author{\IEEEauthorblockN{1\textsuperscript{st} Yashas Nadig, 2\textsuperscript{nd} Neel Narayan Shetty, 3\textsuperscript{rd} Deepthi V Polangi,
+4\textsuperscript{th} Nidhi M R, 5\textsuperscript{th} Divya, 6\textsuperscript{th} Roopa}
+\IEEEauthorblockA{\textit{M S Ramaiah University of Applied Sciences} \\
+Bengaluru, India \\
+Emails: yashasnadigsyn@outlook.com, neelnarayanshetty@gmail.com, deepthi@gmail.com, \\
+nidhi@gmail.com, divya@gmail.com, roopa@gmail.com}
+}
+
+\maketitle
+
+\begin{abstract}
+Oral squamous cell carcinoma (OSCC) remains a significant clinical challenge because of its increased locoregional recurrence and mortality. Tumor budding—characterized by solitary single cancer cells or clusters of fewer than five cells at the invasive margin—has been recognized as a significant prognostic factor. The International Tumor Budding Consensus Conference (ITBCC) offers standardized guidelines for assessing tumor budding; however, manual evaluation is subjective and labor-intensive. This paper suggests the development and validation of a pipeline grounded in Mask R-CNN for the automated detection of tumor budding in OSCC, fully complying with ITBCC standards. Whole-slide H\&E images are divided into tiles and analyzed to identify tumor buds and categorize them into grades BD1, BD2, and BD3. A sliding window method detects high-density hotspots at the invasive edge, guaranteeing precise and consistent grading. The study aims to minimize observer-related variability and provide an economical, scalable assessment method.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Oral Squamous Cell Carcinoma, Tumor Budding, Deep Learning, Mask R-CNN, Digital Pathology
+\end{IEEEkeywords}
+
+\section{Introduction}
+Oral squamous cell carcinoma (OSCC) remains a significant clinical challenge because of its increased locoregional recurrence and mortality, even with standard treatment (Togni et al., 2022). Tumor budding—characterized by solitary single cancer cells or clusters of fewer than five cells at the invasive margin—has been recognized as a significant prognostic factor, associated with lymph node metastasis, aggressive tumor characteristics, and unfavorable survival outcomes (Togni et al., 2022). The International Tumor Budding Consensus Conference (ITBCC) offers standardized guidelines for assessing tumor budding; however, manual evaluation in 0.785 mm\textsuperscript{2} hotspots is still subjective, labor-intensive, and susceptible to variability between and within observers, especially in heterogeneous tumors (Togni et al., 2022). Although deep learning has enhanced tumor budding evaluation in colorectal cancer (Bokhorst et al., 2023a; Sajjad et al., 2024), there is a deficiency of OSCC-specific automation for routine hematoxylin and eosin (H\&E) stains, especially in settings with limited resources (Bokhorst et al., 2023b).
+
+This thesis suggests the development and validation of a pipeline grounded in Mask R-CNN for the automated detection of tumor budding in OSCC, fully complying with ITBCC standards (Togni et al., 2022). Whole-slide H\&E images are divided into tiles and analyzed to identify tumor buds and categorize them into grades BD1, BD2, and BD3. A sliding window method detects high-density hotspots at the invasive edge, guaranteeing precise and consistent grading. The emphasis is on developing a system that fully aligns with standard H\&E slides, eliminating the requirement for special stains or immunohistochemistry, and is appropriate for high-volume clinical settings (Bokhorst et al., 2023a; Sajjad et al., 2024).
+
+The study addresses a vital, unfulfilled requirement in OSCC prognosis: an objective, uniform, and scalable method to evaluate tumor budding through the automation of ITBCC-compliant grading with Mask R-CNN applied to H\&E whole-slide images. This study facilitates consistent, economical assessment, minimizes observer-related variability.
+
+\section{Literature Review and Problem Formulation}
+
+\subsection{Background Theory}
+\subsubsection{Literature Review}
+Oral Squamous Cell Carcinoma (OSCC) accounts for nearly 90\% of oral malignancies and is often preceded by Oral Potentially Malignant Disorders (OPMDs). Early detection is crucial, but traditional diagnosis relies on subjective visual inspection and histopathology, leading to variability in results.
+
+Recent advancements in artificial intelligence (AI) and deep learning (DL), particularly Convolutional Neural Networks (CNNs), have enhanced medical image analysis. Research shows that CNNs effectively classify OPMDs and OSCC from clinical images, while segmentation studies enable pixel-level lesion localization, improving digital pathology workflows. 
+
+A summary of related works is presented in Table \ref{tab:lit_survey}.
+
+\subsubsection{Research Gap and Originality}
+Despite extensive research, most studies focus on binary classification. There is a need for clinically meaningful, pattern-based grading systems. This research emphasizes a structured OSCC grading approach using deep learning, integrating expert pathological knowledge.
+
+\subsection{Literature Survey}
+\begin{table*}[htbp]
+\caption{Literature Survey Summary}
+\label{tab:lit_survey}
+\centering
+\tiny
+\begin{tabular}{|p{0.3cm}|p{2cm}|p{0.5cm}|p{2.5cm}|p{2.5cm}|p{2.5cm}|p{2cm}|p{2cm}|}
+\hline
+\textbf{No} & \textbf{Authors} & \textbf{Year} & \textbf{Focus} & \textbf{Methods} & \textbf{Findings} & \textbf{Limitations} & \textbf{Appraisal} \\
+\hline
+1 & Saldivia-Siracusa et al. [1] & 2025 & Automated classification of OPMDs and OSCC & CNN-based framework & High accuracy in diff. OPMDs from OSCC & Limited dataset & Strong clinical relevance \\
+\hline
+2 & Fati et al. [2] & 2022 & Early diagnosis of OSCC & Deep/hybrid learning & High accuracy, sensitivity, specificity & Limited diversity & Technically sound \\
+\hline
+3 & Das et al. [3] & 2023 & Automatic detection of OSCC & DCNN & Reliable classification & Single dataset & Well-designed \\
+\hline
+4 & Begum \& Vidyullatha [4] & 2023 & Automated OSCC detection & DL classification & Improved accuracy & Dataset size & Useful contribution \\
+\hline
+5 & Singha Deo et al. [5] & 2022 & Oral cancer classification & Attention-based CNN & Outperformed conventional CNNs & Preprint study & Innovative \\
+\hline
+6 & Pal et al. [6] & 2022 & Histopathological classification & Ensemble DL with EWT & Improved accuracy & Computational complexity & Promising \\
+\hline
+7 & \"{U}nsal et al. [7] & 2023 & Automatic segmentation & DL segmentation & High accuracy & Limited variability & Comprehensive \\
+\hline
+8 & \"{U}nsal et al. [8] & 2023 & Segmentation of OPMDs & CNN algorithm & Accurate segmentation & Dataset dependency & Strong method \\
+\hline
+9 & Warin et al. [9] & 2022 & Detection of OPMDs & Deep CNN & High performance & Image quality dep. & Clinically useful \\
+\hline
+10 & Zafar et al. [10] & 2024 & Enhanced OSCC detection & Deep feature fusion & Improved accuracy & High compute & Advanced \\
+\hline
+11 & Zainab et al. [11] & 2025 & OPMD detection cytology & Image analysis & Effective identification & Sample size & Novel \\
+\hline
+12 & Varricchio et al. [12] & 2024 & CAF-1/p60 nuclei ID & DL segmentation & Accurate ID & Marker-specific & Research value \\
+\hline
+13 & Crispino et al. [13] & 2024 & TIL assessment & QuPath + StarDist & Reliable quantification & Technical expertise & Excellent workflow \\
+\hline
+14 & Oya et al. [14] & 2023 & OSCC diagnosis & CNN classification & High accuracy & Limited dataset & Simple/effective \\
+\hline
+15 & Martino et al. [15] & 2020 & Pixel-wise segmentation & DL segmentation & Accurate detection & Older dataset & Foundational \\
+\hline
+16 & Dharani \& Danesh [16] & 2024 & OSCC segmentation & MaskMeanShiftCNN & High accuracy & Complexity & Strong study \\
+\hline
+\end{tabular}
+\end{table*}
+
+\subsection{Problem Formulation}
+\subsubsection{Assumptions}
+\begin{itemize}
+    \item Images are of sufficient quality. .
+    \item Architectures like CNNs can learn discriminative features.
+    \item Labels represent reliable ground truth.
+    \item Computational resources are adequate.
+\end{itemize}
+
+\subsubsection{Merits and Demerits}
+\paragraph{Merits} Deep learning improves accuracy and consistency; reduces variability; enables faster diagnosis.
+\paragraph{Demerits} Limited generalizability; high computational complexity; lack of explainability.
+
+\subsubsection{Research Gap and Originality}
+Despite extensive research, most studies focus on binary classification. There is a need for clinically meaningful, pattern-based grading systems. This research emphasizes a structured OSCC grading approach using deep learning, integrating expert pathological knowledge.
+
+\section{Problem Statement}
+\subsection{Aim}
+To develop a deep learning-based framework for automated quantification of tumor budding in OSCC using routine H\&E-stained sections for prognostic assessment.
+
+\subsection{Objectives}
+\begin{enumerate}
+    \item To annotate Whole Slide Images (WSIs) with precision for the identification and marking of key histopathological regions.
+    \item To design and develop a Mask R-CNN model capable of recognizing and analysing essential histopathological features.
+    \item To fine-tune and optimize the model to better identify and interpret specific histopathological features (automatically counting tumor buds) for improved performance.
+    \item To validate the optimized model using real-time data and comprehensively evaluate its reliability, efficiency, and diagnostic effectiveness.
+\end{enumerate}
+
+\subsection{Scope}
+The project builds an automated system for prognostic assessment of OSCC using tumor buds. Digitized H\&E-stained whole-slide images will be analyzed to detect, localize, and quantify tumor buds.
+
+\section{Materials and Methods}
+
+\subsection{Workflow}
+The overall proposed workflow is illustrated in Fig. \ref{fig:workflow}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\columnwidth]{Algorithm_workflow.jpeg}
+\caption{Workflow}
+\label{fig:workflow}
+\end{figure}
+
+\subsection{Digital Acquisition and Standardization}
+The initial phase involves the digitization of physical histological slides. To ensure the automated system adheres to the ITBCC guidelines, precise calibration of the digital resolution is required. 
+\begin{itemize}
+    \item Slide Scanning: High-throughput Whole Slide Scanner.
+    \item Resolution Calibration: 5120 $\times$ 5120 pixels required to match 0.785 mm\textsuperscript{2}.
+\end{itemize}
+
+\subsection{Pre-processing and Tiling Strategy}
+Processing gigapixel WSIs directly is computationally infeasible. We developed a hierarchical tiling pipeline.
+
+\subsubsection{Global Masking (Stage A)}
+Low-resolution binary mask generated using Otsu's Binarization.
+
+\subsubsection{Adaptive Tiling and Local Filtering (Stage B)}
+WSI segmented into 5120 $\times$ 5120 "Macro Tiles" and then 1024 $\times$ 1024 "Micro Tiles". `is\_tile\_worthy()` function filters background based on Saturation and Brightness. The tiling strategy is visually represented in Fig. \ref{fig:tiling}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\columnwidth]{tiling_strategy.jpeg}
+\caption{Tiling Strategy}
+\label{fig:tiling}
+\end{figure}
+
+\subsection{Deep Learning Model Architecture}
+We employed Mask R-CNN with a ResNet-50 backbone and FPN.
+\begin{itemize}
+    \item ResNet-50 extracts deep semantic features.
+    \item FPN builds a multi-scale feature pyramid.
+    \item RPN proposes Regions of Interest (ROIs).
+    \item ROI Align extracts features without quantization.
+    \item Heads: Classification, Bounding Box, Mask.
+\end{itemize}
+
+\subsection{Training Strategy and Class Imbalance}
+We utilized RepeatFactorTrainingSampler to handle class imbalance (dominance of single cells over clusters).
+Data Augmentation included geometric transformations and color augmentations. The training workflow is depicted in Fig. \ref{fig:training_workflow}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\columnwidth]{Training_workflow.jpeg}
+\caption{Training Workflow}
+\label{fig:training_workflow}
+\end{figure}
+
+\subsection{Post-Processing and Hotspot Refinement}
+The system reconstructs spatial data to form a density map.
+\begin{enumerate}
+    \item Initial Scouting: Scans density map for invasive front.
+    \item Sliding Window Optimization: Shifts window to find max bud count in 0.785 mm\textsuperscript{2}.
+\end{enumerate}
+
+\section{Results and Discussions}
+
+\subsection{Confusion Matrix}
+The confusion matrix shows the performance of the model on the validation set for five classes (Fig. \ref{fig:confusion}).
+Class 1 and 2 show strong detection accuracy. Most confusion occurs between Class 1 and 5, and 3 and 5.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\columnwidth]{Confusion_Matrix.jpeg}
+\caption{Confusion matrix for 5 tumor bud class}
+\label{fig:confusion}
+\end{figure}
+
+\subsection{Performance Graphs}
+The training and validation accuracy and loss curves are shown in Fig. \ref{fig:accuracy} and Fig. \ref{fig:loss}, respectively. They show a steady increase in accuracy and decrease in loss, indicating effective learning. Fig. \ref{fig:roc} presents the ROC curves for the different classes.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\columnwidth]{Train_vs_Val_accuracy.jpeg}
+\caption{Accuracy Vs Epochs}
+\label{fig:accuracy}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\columnwidth]{Train_vs_Val_Loss.jpeg}
+\caption{Loss Vs Epochs}
+\label{fig:loss}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\columnwidth]{AUC_ROC.jpeg}
+\caption{True Positive Rate Vs False Positive Rate}
+\label{fig:roc}
+\end{figure}
+
+\subsection{Graphical User Interface}
+A GUI was developed for uploading WSIs and getting grades. The workflow of the GUI is shown in Fig. \ref{fig:gui_workflow}. The various pages of the application are displayed in Fig. \ref{fig:gui_home}, Fig. \ref{fig:gui_pred}, and Fig. \ref{fig:gui_analysis}.
+
+\begin{figure*}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{Application_workflow.jpeg}
+\caption{GUI Workflow}
+\label{fig:gui_workflow}
+\end{figure*}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\columnwidth]{oscc_frontend_1.jpeg}
+\caption{GUI Homepage}
+\label{fig:gui_home}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\columnwidth]{oscc_frontend_2.jpeg}
+\caption{Prediction Page}
+\label{fig:gui_pred}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\columnwidth]{oscc_frontend_3.jpeg}
+\caption{Analysis Page}
+\label{fig:gui_analysis}
+\end{figure}
+
+\subsection{Discussion}
+The model demonstrates strong performance for Classes 1 and 2. Moderate confusion in Classes 3 and 5 reflects morphological overlap. The results validate the robustness of the framework.
+
+\section{Conclusion and Future Directions}
+\subsection{Conclusions}
+The investigation successfully demonstrates the feasibility of a deep learning-based framework for automated tumor budding detection. The multi-class classification model achieved strong performance. The GUI adds practical value.
+
+\subsection{Future Directions}
+\begin{itemize}
+    \item Dataset Expansion and Class Balancing.
+    \item Multi-Scale and Attention-Based Learning.
+    \item Explainable Artificial Intelligence (XAI).
+    \item Clinical and Prospective Validation.
+\end{itemize}
+
+\begin{thebibliography}{00}
+\bibitem{b1} Saldivia-Siracusa et al., ``Automated classification of oral potentially malignant disorders and oral squamous cell carcinoma using a convolutional neural network framework: a cross-sectional study,'' The Lancet Regional Health–Americas, 47, 2025.
+\bibitem{b2} Fati, S. M., Senan, E. M., \& Javed, Y., ``Early diagnosis of oral squamous cell carcinoma based on histopathological images using deep and hybrid learning approaches,'' Diagnostics, 12(8), 1899, 2022.
+\bibitem{b3} Das, M., Dash, R., \& Mishra, S. K., ``Automatic detection of oral squamous cell carcinoma from histopathological images of oral mucosa using deep convolutional neural network,'' International Journal of Environmental Research and Public Health, 20(3), 2131, 2023.
+\bibitem{b4} Begum, S. H., \& Vidyullatha, P., ``Deep learning model for automatic detection of oral squamous cell carcinoma (OSCC) using histopathological images,'' Int. J. Comput. Digit. Syst, 13(1), 889-899, 2023.
+\bibitem{b5} Singha Deo, B., Pal, M., Panigrahi, P. K., \& Pradhan, A., ``Supremacy of attention based convolution neural network in classification of oral cancer using histopathological images,'' medRxiv, 2022-11.
+\bibitem{b6} Pal, M., Panigrahi, P., \& Pradhan, A., ``An ensemble deep learning model with empirical wavelet transform feature for oral cancer histopathological image classification,'' medRxiv 2022. 2022, 22282266.
+\bibitem{b7} \"{U}nsal, G. et al., ``Deep learning-based automatic segmentation of oral squamous cell carcinoma in histopathological images: a comprehensive evaluation and performance analysis,'' Journal of Stomatology, 78(2), 127-131.
+\bibitem{b8} \"{U}nsal, G. et al., ``Deep convolutional neural network algorithm for the automatic segmentation of oral potentially malignant disorders and oral cancers,'' Proc IMechE Part H: J Engineering in Medicine, 237(6), 719-726, 2023.
+\bibitem{b9} Warin, K. et al., ``Performance of deep convolutional neural network for classification and detection of oral potentially malignant disorders in photographic images,'' Int J Oral Maxillofac Surg, 51(5), 699-704, 2022.
+\bibitem{b10} Zafar, A. et al., ``Enhancing Oral Squamous Cell Carcinoma Detection Using Histopathological Images: A Deep Feature Fusion and Improved Haris Hawks Optimization-Based Framework,'' Bioengineering, 11(9), 913, 2024.
+\bibitem{b11} Zainab, H. et al., ``Automated detection of oral potential malignant disorders using exfoliative cytology,'' J Dent Spec, 13(2), 210-214, 2025.
+\bibitem{b12} Varricchio, S. et al., ``Leveraging deep learning for identification and segmentation of “CAF-1/p60-positive” nuclei in oral squamous cell carcinoma tissue samples,'' Journal of Pathology Informatics, 15, 100407, 2024.
+\bibitem{b13} Crispino, A. et al., ``A digital workflow for automated assessment of tumor-infiltrating lymphocytes in oral squamous cell carcinoma using qupath and a stardist-based model,'' Pathologica-J Italian Soc Anatomic Pathology, 116, 2024.
+\bibitem{b14} Oya, K. et al., ``Oral squamous cell carcinoma diagnosis in digitized histological images using convolutional neural network,'' Journal of Dental Sciences, 18(1), 322-329, 2023.
+\bibitem{b15} Martino, F. et al., ``Deep learning-based pixel-wise lesion segmentation on oral squamous cell carcinoma images,'' Applied Sciences, 10(22), 8285, 2020.
+\bibitem{b16} Dharani, R., \& Danesh, K., ``Oral cancer segmentation and identification system based on histopathological images using MaskMeanShiftCNN and SV-OnionNet,'' Intelligence-Based Medicine, 10, 100185, 2024.
+\end{thebibliography}
+
+\end{document}
